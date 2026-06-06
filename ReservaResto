@@ -1,0 +1,472 @@
+package main
+
+import "fmt"
+
+const nMax int = 100
+
+type table struct {
+	num, cap, rCount int
+	status           bool
+	//true = available, false = reserved
+}
+
+type customer struct {
+	Id   int
+	name string
+}
+
+type reservation struct {
+	tableNum, customerId int
+	date                 string
+}
+
+type tables [nMax]table
+type customers [nMax]customer
+type reservations [nMax]reservation
+
+var nT, nC, nR, i int
+
+// 1
+func addTable(t *tables, nT *int) {
+	fmt.Scan(&t[*nT].num, &t[*nT].cap)
+	t[*nT].status = true
+	fmt.Printf("\nTable added successfully!\n")
+	*nT++
+}
+
+// 2
+func changeTableData(t *tables, nT int, target int) {
+	var newNum, newCap int
+	var valid bool
+	i = 0
+	valid = true
+	fmt.Print("Please Input New Table Number and Capacity: ")
+	fmt.Scan(&newNum, &newCap)
+	//range if teh ngecek kalau yg mau diubah terdaftar ato ga indeksnya
+	if target >= 0 && target < nT {
+		for i < nT && valid {
+			if i != target && newNum == (*t)[i].num {
+				fmt.Printf("\nTable already exists\n")
+				valid = false
+			}
+			i++
+		}
+
+		if valid {
+			(*t)[target].num = newNum
+			(*t)[target].cap = newCap
+			(*t)[target].status = true
+			fmt.Printf("\nTable data changed!\n")
+		}
+	} else {
+		fmt.Printf("\nTable doesn't exist\n")
+	}
+}
+
+// 3
+func deleteTable(t *tables, nT *int, target int) {
+	if target >= 0 && target < *nT {
+		fmt.Printf("\nDeleting Table Number %d\n", t[target].num)
+		for i = target; i < *nT-1; i++ {
+			(*t)[i] = (*t)[i+1] /*geser SEMUA indeks depannya ke belakang 1x*/
+		}
+		*nT--
+		fmt.Printf("\nTable Data with id no.%d deleted successfully!\n", target)
+
+	} else {
+		fmt.Printf("\nTable doesn't exist\n")
+	}
+}
+
+// 4
+func addCustomer(c *customers, nC *int) {
+	fmt.Scan(&c[*nC].Id, &c[*nC].name)
+	fmt.Printf("\nCustomer added successfully!\n")
+	*nC++
+}
+
+// 5
+func changeCustomerData(c *customers, nC int, target int) {
+	var newId int
+	var newName string
+	var valid bool
+	i = 0
+	valid = true
+	fmt.Print("Please Input New Customer Id and Name: ")
+	fmt.Scan(&newId, &newName)
+	if target >= 0 && target < nC {
+		for i < nC && valid {
+			if i != target && newId == (*c)[i].Id {
+				fmt.Printf("\nCustomer already exists\n")
+				valid = false
+			}
+			i++
+		}
+		if valid {
+			(*c)[target].Id = newId
+			(*c)[target].name = newName
+			fmt.Printf("\nCustomer data changed!\n")
+		}
+	} else {
+		fmt.Printf("\nCustomer doesn't exist\n")
+	}
+}
+
+// 6
+func deleteCustomer(c *customers, nC *int, target int) {
+	if target >= 0 && target < *nC {
+		fmt.Printf("\nDeleting Customer Number %d\n", c[target].Id)
+		for i = target; i < *nC-1; i++ {
+			(*c)[i] = (*c)[i+1] /*geser SEMUA indeks depannya ke belakang 1x*/
+		}
+		*nC--
+		fmt.Printf("\nCustomer Data with id no.%d deleted successfully!\n", target)
+
+	} else {
+		fmt.Printf("\nCustomer doesn't exist\n")
+	}
+}
+
+// 7
+func makeReservation(r *reservations, nR *int, t *tables, nT int, c *customers, nC *int) {
+	var targetTable, targetCustomer int
+	var targetDate string
+	var tFound, cFound, conflict bool
+
+	fmt.Print("Enter Customer ID: ")
+	fmt.Scan(&targetCustomer)
+
+	//cek customer Id dah sudah terdaftar
+	cFound = false
+	i = 0
+	for i < *nC && !cFound {
+		if c[i].Id == targetCustomer {
+			cFound = true
+		}
+		i++
+	}
+
+	//klo belum ada... langsung daftarkan customer Id di tempat!
+	if !cFound {
+		fmt.Printf("Customer ID %d not found. Creating new customer profile...\n", targetCustomer)
+
+		//masukin ke array customers
+		c[*nC].Id = targetCustomer
+		fmt.Print("Please Enter Customer Name: ")
+		fmt.Scan(&c[*nC].name)
+		*nC++ //Naikin jumlah total customer
+
+		fmt.Println("New customer profile created successfully!")
+	}
+
+	//Lanjut minta input data Table dan tanggal
+	fmt.Print("Enter Table Number and Date (YYYY-MM-DD): ")
+	fmt.Scan(&targetTable, &targetDate)
+
+	//Cek table dah ada atau ga
+	tFound = false
+	i = 0
+	for i < nT && !tFound {
+		if t[i].num == targetTable {
+			tFound = true
+		}
+		i++
+	}
+
+	if !tFound {
+		fmt.Printf("\nError: Table number %d does not exist!\n", targetTable)
+		return
+	}
+	//cek apakah jadwal bentrok
+	conflict = false
+	i = 0
+	for i < *nR && !conflict {
+		if r[i].tableNum == targetTable && r[i].date == targetDate {
+			conflict = true
+		}
+		i++
+	}
+
+	//catat reservasi
+	if conflict {
+		fmt.Printf("\nFailed: Table %d is already reserved on %s!\n", targetTable, targetDate)
+	} else {
+		r[*nR].tableNum = targetTable
+		r[*nR].customerId = targetCustomer
+		r[*nR].date = targetDate
+		*nR++
+
+		//ubah status ketersediaan Table menjadi false (menunjukkan dah di reservasi)
+		i = 0
+		for i < nT {
+			if t[i].num == targetTable {
+				t[i].status = false
+				t[i].rCount++
+			}
+			i++
+		}
+		fmt.Printf("\nReservation successful for Customer %d at Table %d on %s!\n", targetCustomer, targetTable, targetDate)
+	}
+}
+
+// 8
+func sequentialSearch(t tables, nT int, target, option int) {
+	if option == 1 { /*kalo pilih search dengan nomor meja*/
+		for i = 0; i < nT; i++ {
+			if target == t[i].num {
+				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[i].num, t[i].cap, t[i].status)
+			}
+		}
+	} else { /*kalo pilih search dengan kapasitas meja*/
+		for i = 0; i < nT; i++ {
+			if target == t[i].cap {
+				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[i].num, t[i].cap, t[i].status)
+			}
+		}
+	}
+
+}
+
+// 9
+func binarySearch(t tables, nT int, target, option int) {
+	var left, mid, right int
+	left = 0
+	right = nT - 1
+	mid = (left + right) / 2
+	if option == 1 { /*kalo pilih search dengan nomor meja*/
+		for left <= right {
+			if t[mid].num > target {
+				right = mid - 1
+			} else if t[mid].num < target {
+				left = mid + 1
+			} else {
+				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[mid].num, t[mid].cap, t[mid].status)
+				left = right + 1
+			}
+			mid = (left + right) / 2
+		}
+	} else { /*kalo pilih search dengan kapasitas meja*/
+		for left <= right {
+			if t[mid].cap > target {
+				right = mid - 1
+			} else if t[mid].cap < target {
+				left = mid + 1
+			} else {
+				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[mid].num, t[mid].cap, t[mid].status)
+				left = right + 1
+			}
+			mid = (left + right) / 2
+		}
+	}
+
+}
+
+// 10
+func selectionSortAscend(t *tables, nT int) {
+	var j, min int
+	var temp table
+	for i = 1; i < nT; i++ {
+		min = i - 1
+		for j = i; j < nT; j++ {
+			if t[min].cap > t[j].cap {
+				min = j
+			}
+		}
+		temp = t[min]
+		t[min] = t[i-1]
+		t[i-1] = temp
+	}
+}
+
+// 11
+func insertionSortAscend(t *tables, nT int) {
+	var j int
+	var temp table
+	for i = 1; i < nT; i++ {
+		temp = t[i]
+		j = i - 1
+		for j >= 0 && temp.cap < t[j].cap {
+			t[j+1] = t[j]
+			j = j - 1
+		}
+		t[j+1] = temp
+	}
+}
+
+// 12
+func showTables(t tables, nT int) {
+	for i = 0; i < nT; i++ {
+		fmt.Printf("%-3d | %-6d | %-8d | %t\n", i, t[i].num, t[i].cap, t[i].status)
+	}
+}
+
+// 13
+func showCustomers(c customers, nC int) {
+	for i = 0; i < nC; i++ {
+		fmt.Printf("%-3d | %-4d | %s\n", i, c[i].Id, c[i].name)
+	}
+}
+
+// 14
+func showReservations(r reservations, nR int) {
+	for i = 0; i < nR; i++ {
+		fmt.Printf("%-3d | %-12d | %-11d | %s\n", i, r[i].tableNum, r[i].customerId, r[i].date)
+	}
+}
+
+func preloadData(t *tables, nT *int, c *customers, nC *int, r *reservations, nR *int) {
+	//Table 1
+	t[*nT].num = 101
+	t[*nT].cap = 2
+	t[*nT].status = true
+	t[*nT].rCount = 0
+	*nT++
+	//Table 2
+	t[*nT].num = 108
+	t[*nT].cap = 4
+	t[*nT].status = true
+	t[*nT].rCount = 0
+	*nT++
+	//Table 3
+	t[*nT].num = 104
+	t[*nT].cap = 6
+	t[*nT].status = false
+	t[*nT].rCount = 0
+	*nT++
+	//Table 4
+	t[*nT].num = 112
+	t[*nT].cap = 4
+	t[*nT].status = true
+	t[*nT].rCount = 0
+	*nT++
+
+	//Customer 1
+	c[*nC].Id = 111
+	c[*nC].name = "Zein"
+	*nC++
+
+	//Customer 2
+	c[*nC].Id = 167
+	c[*nC].name = "Nugraha"
+	*nC++
+
+	//Reservation
+	r[*nR].customerId = 111
+	r[*nR].tableNum = 104
+	r[*nR].date = "2026-10-26"
+	*nR++
+
+	fmt.Printf("\n[System] 4 Tables, 2 Customers, and 1 Reservation pre-loaded successfully!\n")
+}
+
+func main() {
+	var cmd, j, most, target, option int
+	var T tables
+	var R reservations
+	var C customers
+	preloadData(&T, &nT, &C, &nC, &R, &nR)
+	cmd = -1
+	for cmd != 0 {
+		fmt.Println("\n=== Welcome User ===")
+		fmt.Println("1. Start New Day")
+		fmt.Println("0. End Day")
+		fmt.Print("Please Select: ")
+		fmt.Scan(&cmd)
+
+		if cmd == 1 {
+			for cmd != 0 {
+				fmt.Println("\n=== ReservaResto Menu ==")
+				fmt.Println("1. Add Table")
+				fmt.Println("2. Change Table Data")
+				fmt.Println("3. Delete Table")
+				fmt.Println("4. Add Customer")
+				fmt.Println("5. Change Customer Data")
+				fmt.Println("6. Delete Customer")
+				fmt.Println("7. Make Reservation")
+				fmt.Println("8. Find Table with Sequential Search")
+				fmt.Println("9. Find Table with Binary Search")
+				fmt.Println("10. Sort Tables (Selection)")
+				fmt.Println("11. Sort Tables (Insertion)")
+				fmt.Println("12. Show Tables")
+				fmt.Println("13. Show Customers")
+				fmt.Println("14. Show Reservations")
+				fmt.Println("0. Finish Day")
+				fmt.Print("Please Select: ")
+				fmt.Scan(&cmd)
+				if cmd == 1 {
+					fmt.Print("Please Input Table Number and Capacity: ")
+					addTable(&T, &nT)
+				} else if cmd == 2 {
+					fmt.Print("Please Select Table Index: ")
+					fmt.Scan(&target)
+					changeTableData(&T, nT, target)
+				} else if cmd == 3 {
+					fmt.Print("Please Select Table Index: ")
+					fmt.Scan(&target)
+					deleteTable(&T, &nT, target)
+				} else if cmd == 4 {
+					fmt.Print("Please Input Customer Id and Name: ")
+					addCustomer(&C, &nC)
+				} else if cmd == 5 {
+					fmt.Print("Please Select Customer Index: ")
+					fmt.Scan(&target)
+					changeCustomerData(&C, nC, target)
+				} else if cmd == 6 {
+					fmt.Print("Please Select Customer Index: ")
+					fmt.Scan(&target)
+					deleteCustomer(&C, &nC, target)
+				} else if cmd == 7 {
+					makeReservation(&R, &nR, &T, nT, &C, &nC)
+				} else if cmd == 8 {
+					fmt.Print("Please Select Filter Option, by Number (1) or by Capacity (2): ")
+					fmt.Scan(&option)
+					fmt.Print("Please Select Table Number/Capactity: ")
+					fmt.Scan(&target)
+					sequentialSearch(T, nT, target, option)
+				} else if cmd == 9 {
+					fmt.Print("Please Select Filter Option, by Number (1) or by Capacity (2): ")
+					fmt.Scan(&option)
+					fmt.Print("Please Select Table Number/Capactity: ")
+					fmt.Scan(&target)
+					binarySearch(T, nT, target, option)
+				} else if cmd == 10 {
+					selectionSortAscend(&T, nT)
+					fmt.Printf("\nTables Sorted!\n")
+				} else if cmd == 11 {
+					insertionSortAscend(&T, nT)
+					fmt.Printf("\nTables Sorted!\n")
+				} else if cmd == 12 {
+					fmt.Printf("\nData for Current Tables:\n")
+					fmt.Printf("Idx | Number | Capacity | Status\n")
+					showTables(T, nT)
+				} else if cmd == 13 {
+					fmt.Printf("\nData for Current Customers:\n")
+					fmt.Printf("Idx |  Id  | Name\n")
+					showCustomers(C, nC)
+				} else if cmd == 14 {
+					fmt.Printf("\nData for Current Reservations:\n")
+					fmt.Printf("Idx | Table Number | Customer Id | Date\n")
+					showReservations(R, nR)
+				} else {
+					fmt.Printf("\nCommand Unexpected, Please Choose again\n")
+				}
+			}
+			fmt.Printf("\nTable Number | Reservation Amount\n")
+			for i = 0; i < nT; i++ {
+				fmt.Printf("    %-8d |       %-13d\n", T[i].num, T[i].rCount)
+				most = 0
+				for j = 1; j < nT; j++ {
+					if T[most].rCount < T[j].rCount {
+						most = j
+					}
+				}
+			}
+			fmt.Printf("The most reserved table today is table number %d with %d reservations\n", T[most].num, T[most].rCount)
+			cmd = -1
+		} else if cmd == 0 {
+			fmt.Printf("\n=== Thank You User for Using ResevaResto ===\n")
+		} else {
+			fmt.Printf("\nCommand Unexpected, Please Choose again\n")
+		}
+	}
+}

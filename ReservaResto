@@ -40,10 +40,10 @@ func changeTableData(t *tables, nT int, target int) {
 	var valid bool
 	i = 0
 	valid = true
-	fmt.Print("Please Input New Table Number and Capacity: ")
-	fmt.Scan(&newNum, &newCap)
 	//range if teh ngecek kalau yg mau diubah terdaftar ato ga indeksnya
-	if target >= 0 && target < nT {
+	if target >= 0 && target < nT && t[target].status == true {
+		fmt.Print("Please Input New Table Number and Capacity: ")
+		fmt.Scan(&newNum, &newCap)
 		for i < nT && valid {
 			if i != target && newNum == (*t)[i].num {
 				fmt.Printf("\nTable already exists\n")
@@ -58,8 +58,10 @@ func changeTableData(t *tables, nT int, target int) {
 			(*t)[target].status = true
 			fmt.Printf("\nTable data changed!\n")
 		}
+	} else if t[target].status == false {
+		fmt.Printf("\nTable is already reserved!\n")
 	} else {
-		fmt.Printf("\nTable doesn't exist\n")
+		fmt.Printf("\nTable is doesn't exist!\n")
 	}
 }
 
@@ -92,9 +94,9 @@ func changeCustomerData(c *customers, nC int, target int) {
 	var valid bool
 	i = 0
 	valid = true
-	fmt.Print("Please Input New Customer Id and Name: ")
-	fmt.Scan(&newId, &newName)
 	if target >= 0 && target < nC {
+		fmt.Print("Please Input New Customer Id and Name: ")
+		fmt.Scan(&newId, &newName)
 		for i < nC && valid {
 			if i != target && newId == (*c)[i].Id {
 				fmt.Printf("\nCustomer already exists\n")
@@ -211,25 +213,33 @@ func makeReservation(r *reservations, nR *int, t *tables, nT int, c *customers, 
 
 // 8
 func sequentialSearch(t tables, nT int, target, option int) {
+	var found bool
+	found = false
 	if option == 1 { /*kalo pilih search dengan nomor meja*/
 		for i = 0; i < nT; i++ {
 			if target == t[i].num {
 				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[i].num, t[i].cap, t[i].status)
+				found = true
 			}
 		}
 	} else { /*kalo pilih search dengan kapasitas meja*/
 		for i = 0; i < nT; i++ {
 			if target == t[i].cap {
 				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[i].num, t[i].cap, t[i].status)
+				found = true
 			}
 		}
 	}
-
+	if !found {
+		fmt.Printf("\nTable doesn't exist!\n")
+	}
 }
 
 // 9
 func binarySearch(t tables, nT int, target, option int) {
 	var left, mid, right int
+	var found bool
+	found = false
 	left = 0
 	right = nT - 1
 	mid = (left + right) / 2
@@ -241,6 +251,7 @@ func binarySearch(t tables, nT int, target, option int) {
 				left = mid + 1
 			} else {
 				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[mid].num, t[mid].cap, t[mid].status)
+				found = true
 				left = right + 1
 			}
 			mid = (left + right) / 2
@@ -253,12 +264,15 @@ func binarySearch(t tables, nT int, target, option int) {
 				left = mid + 1
 			} else {
 				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[mid].num, t[mid].cap, t[mid].status)
+				found = true
 				left = right + 1
 			}
 			mid = (left + right) / 2
 		}
 	}
-
+	if !found {
+		fmt.Printf("\nTable doesn't exist!\n")
+	}
 }
 
 // 10

@@ -6,7 +6,7 @@ const nMax int = 100
 
 type table struct {
 	num, cap, rCount int
-	status           bool
+	status bool
 	//true = available, false = reserved
 }
 
@@ -28,14 +28,28 @@ var nT, nC, nR, i int
 
 // 1
 func addTable(t *tables, nT *int) {
-	fmt.Scan(&t[*nT].num, &t[*nT].cap)
-	t[*nT].status = true
-	fmt.Printf("\nTable added successfully!\n")
-	*nT++
+	var valid bool
+	var newNum, newCap int
+	valid = true
+	fmt.Scan(&newNum, &newCap)
+	for i < *nT && valid {
+		if newNum == t[i].num {
+			fmt.Printf("\nTable already exists!\n")
+			valid = false
+		}
+		i++
+	}
+	if valid {
+		t[*nT].num = newNum
+		t[*nT].cap = newCap
+		t[*nT].status = true
+		fmt.Printf("\nTable added successfully!\n")
+		*nT++
+	}
 }
 
 // 2
-func changeTableData(t *tables, nT int, target int) {
+func changeTableData(t *tables, nT int, target int) { //target == index
 	var newNum, newCap int
 	var valid bool
 	i = 0
@@ -45,8 +59,8 @@ func changeTableData(t *tables, nT int, target int) {
 		fmt.Print("Please Input New Table Number and Capacity: ")
 		fmt.Scan(&newNum, &newCap)
 		for i < nT && valid {
-			if i != target && newNum == (*t)[i].num {
-				fmt.Printf("\nTable already exists\n")
+			if newNum == (*t)[i].num {
+				fmt.Printf("\nTable already exists!\n")
 				valid = false
 			}
 			i++
@@ -58,37 +72,53 @@ func changeTableData(t *tables, nT int, target int) {
 			(*t)[target].status = true
 			fmt.Printf("\nTable data changed!\n")
 		}
-	} else if t[target].status == false {
-		fmt.Printf("\nTable is already reserved!\n")
+	} else if target > (nT - 1) {
+		fmt.Printf("\nTable doesn't exist!\n")
 	} else {
-		fmt.Printf("\nTable is doesn't exist!\n")
+		fmt.Printf("\nTable is already reserved, cannot change cata!\n")
 	}
 }
 
 // 3
 func deleteTable(t *tables, nT *int, target int) {
-	if target >= 0 && target < *nT {
+	if target < 0 || target > *nT {
+		fmt.Printf("\nTable doesn't exist!\n")
+	} else if t[target].status == false {
+		fmt.Printf("\nTable is already reserved, cannot delete!\n")
+	} else {
 		fmt.Printf("\nDeleting Table Number %d\n", t[target].num)
 		for i = target; i < *nT-1; i++ {
 			(*t)[i] = (*t)[i+1] /*geser SEMUA indeks depannya ke belakang 1x*/
 		}
 		*nT--
 		fmt.Printf("\nTable Data with id no.%d deleted successfully!\n", target)
-
-	} else {
-		fmt.Printf("\nTable doesn't exist\n")
 	}
 }
 
 // 4
 func addCustomer(c *customers, nC *int) {
-	fmt.Scan(&c[*nC].Id, &c[*nC].name)
-	fmt.Printf("\nCustomer added successfully!\n")
-	*nC++
+	var valid bool
+	var newId int
+	var newName string
+	valid = true
+	fmt.Scan(&newId, &newName)
+	for i < *nC && valid {
+		if newId == c[i].Id {
+			fmt.Printf("\nCustomer already exists!\n")
+			valid = false
+		}
+		i++
+	}
+	if valid {
+		c[*nC].Id = newId
+		c[*nC].name = newName
+		fmt.Printf("\nCustomer added successfully!\n")
+		*nC++
+	}
 }
 
 // 5
-func changeCustomerData(c *customers, nC int, target int) {
+func changeCustomerData(c *customers, nC int, target int) { //target = index
 	var newId int
 	var newName string
 	var valid bool
@@ -98,8 +128,8 @@ func changeCustomerData(c *customers, nC int, target int) {
 		fmt.Print("Please Input New Customer Id and Name: ")
 		fmt.Scan(&newId, &newName)
 		for i < nC && valid {
-			if i != target && newId == (*c)[i].Id {
-				fmt.Printf("\nCustomer already exists\n")
+			if newId == (*c)[i].Id {
+				fmt.Printf("\nCustomer Id already exists!\n")
 				valid = false
 			}
 			i++
@@ -116,16 +146,15 @@ func changeCustomerData(c *customers, nC int, target int) {
 
 // 6
 func deleteCustomer(c *customers, nC *int, target int) {
-	if target >= 0 && target < *nC {
+	if target < 0 || target > *nC {
+		fmt.Printf("\nCustomer doesn't exist!\n")
+	} else {
 		fmt.Printf("\nDeleting Customer Number %d\n", c[target].Id)
 		for i = target; i < *nC-1; i++ {
 			(*c)[i] = (*c)[i+1] /*geser SEMUA indeks depannya ke belakang 1x*/
 		}
 		*nC--
 		fmt.Printf("\nCustomer Data with id no.%d deleted successfully!\n", target)
-
-	} else {
-		fmt.Printf("\nCustomer doesn't exist\n")
 	}
 }
 
@@ -212,66 +241,42 @@ func makeReservation(r *reservations, nR *int, t *tables, nT int, c *customers, 
 }
 
 // 8
-func sequentialSearch(t tables, nT int, target, option int) {
+func sequentialSearch(t tables, nT int, target int) {
 	var found bool
 	found = false
-	if option == 1 { /*kalo pilih search dengan nomor meja*/
-		for i = 0; i < nT; i++ {
-			if target == t[i].num {
-				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[i].num, t[i].cap, t[i].status)
-				found = true
-			}
-		}
-	} else { /*kalo pilih search dengan kapasitas meja*/
-		for i = 0; i < nT; i++ {
-			if target == t[i].cap {
-				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[i].num, t[i].cap, t[i].status)
-				found = true
-			}
+	for i = 0; i < nT; i++ {
+		if target == t[i].num {
+			fmt.Printf("\nTable found on index no %d!\nNumber: %d\nCapacity: %d\nStatus: %t\n", i, t[i].num, t[i].cap, t[i].status)
+			found = true
 		}
 	}
 	if !found {
 		fmt.Printf("\nTable doesn't exist!\n")
 	}
 }
-
+// 
 // 9
-func binarySearch(t tables, nT int, target, option int) {
+func binarySearch(t tables, nT int, target int) {
 	var left, mid, right int
 	var found bool
 	found = false
 	left = 0
 	right = nT - 1
 	mid = (left + right) / 2
-	if option == 1 { /*kalo pilih search dengan nomor meja*/
-		for left <= right {
-			if t[mid].num > target {
-				right = mid - 1
-			} else if t[mid].num < target {
-				left = mid + 1
-			} else {
-				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[mid].num, t[mid].cap, t[mid].status)
-				found = true
-				left = right + 1
-			}
-			mid = (left + right) / 2
+	for left <= right {
+		if t[mid].cap > target {
+			right = mid - 1
+		} else if t[mid].cap < target {
+			left = mid + 1
+		} else {
+			fmt.Printf("\nTable found on index no %d!\nNumber: %d\nCapacity: %d\nStatus: %t\n", mid, t[mid].num, t[mid].cap, t[mid].status)
+			found = true
+			left = right + 1
 		}
-	} else { /*kalo pilih search dengan kapasitas meja*/
-		for left <= right {
-			if t[mid].cap > target {
-				right = mid - 1
-			} else if t[mid].cap < target {
-				left = mid + 1
-			} else {
-				fmt.Printf("\nTable found!\nNumber: %d\nCapacity: %d\nStatus: %t\n", t[mid].num, t[mid].cap, t[mid].status)
-				found = true
-				left = right + 1
-			}
-			mid = (left + right) / 2
-		}
+		mid = (left + right) / 2
 	}
 	if !found {
-		fmt.Printf("\nTable doesn't exist!\n")
+		fmt.Printf("\nTable doesn't exist or Tables haven't been sorted yet!\n")
 	}
 }
 
@@ -331,25 +336,25 @@ func showReservations(r reservations, nR int) {
 func preloadData(t *tables, nT *int, c *customers, nC *int, r *reservations, nR *int) {
 	//Table 1
 	t[*nT].num = 101
-	t[*nT].cap = 2
+	t[*nT].cap = 3
 	t[*nT].status = true
 	t[*nT].rCount = 0
 	*nT++
 	//Table 2
 	t[*nT].num = 108
-	t[*nT].cap = 4
+	t[*nT].cap = 2
 	t[*nT].status = true
 	t[*nT].rCount = 0
 	*nT++
 	//Table 3
 	t[*nT].num = 104
-	t[*nT].cap = 6
+	t[*nT].cap = 9
 	t[*nT].status = false
-	t[*nT].rCount = 0
+	t[*nT].rCount = 1
 	*nT++
 	//Table 4
 	t[*nT].num = 112
-	t[*nT].cap = 4
+	t[*nT].cap = 7
 	t[*nT].status = true
 	t[*nT].rCount = 0
 	*nT++
@@ -374,7 +379,7 @@ func preloadData(t *tables, nT *int, c *customers, nC *int, r *reservations, nR 
 }
 
 func main() {
-	var cmd, j, most, target, option int
+	var cmd, j, most, target int
 	var T tables
 	var R reservations
 	var C customers
@@ -397,8 +402,8 @@ func main() {
 				fmt.Println("5. Change Customer Data")
 				fmt.Println("6. Delete Customer")
 				fmt.Println("7. Make Reservation")
-				fmt.Println("8. Find Table with Sequential Search")
-				fmt.Println("9. Find Table with Binary Search")
+				fmt.Println("8. Find Table Using Number (Sequential Search)")
+				fmt.Println("9. Find Table Using Capacity (Binary Search)")
 				fmt.Println("10. Sort Tables (Selection)")
 				fmt.Println("11. Sort Tables (Insertion)")
 				fmt.Println("12. Show Tables")
@@ -432,17 +437,13 @@ func main() {
 				} else if cmd == 7 {
 					makeReservation(&R, &nR, &T, nT, &C, &nC)
 				} else if cmd == 8 {
-					fmt.Print("Please Select Filter Option, by Number (1) or by Capacity (2): ")
-					fmt.Scan(&option)
-					fmt.Print("Please Select Table Number/Capactity: ")
+					fmt.Print("Please Select Table Number: ")
 					fmt.Scan(&target)
-					sequentialSearch(T, nT, target, option)
+					sequentialSearch(T, nT, target)
 				} else if cmd == 9 {
-					fmt.Print("Please Select Filter Option, by Number (1) or by Capacity (2): ")
-					fmt.Scan(&option)
-					fmt.Print("Please Select Table Number/Capactity: ")
+					fmt.Print("Please Select Capactity: ")
 					fmt.Scan(&target)
-					binarySearch(T, nT, target, option)
+					binarySearch(T, nT, target)
 				} else if cmd == 10 {
 					selectionSortAscend(&T, nT)
 					fmt.Printf("\nTables Sorted!\n")

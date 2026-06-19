@@ -6,7 +6,7 @@ const nMax int = 100
 
 type table struct {
 	num, cap, rCount int
-	status bool
+	status           bool
 	//true = available, false = reserved
 }
 
@@ -159,7 +159,7 @@ func deleteCustomer(c *customers, nC *int, target int) {
 }
 
 // 7
-func makeReservation(r *reservations, nR *int, t *tables, nT int, c *customers, nC *int) {
+func makeReservation(r *reservations, nR *int, t *tables, nT *int, c *customers, nC *int) {
 	var targetTable, targetCustomer int
 	var targetDate string
 	var tFound, cFound, conflict bool
@@ -197,7 +197,7 @@ func makeReservation(r *reservations, nR *int, t *tables, nT int, c *customers, 
 	//Cek table dah ada atau ga
 	tFound = false
 	i = 0
-	for i < nT && !tFound {
+	for i < *nT && !tFound {
 		if t[i].num == targetTable {
 			tFound = true
 		}
@@ -205,8 +205,17 @@ func makeReservation(r *reservations, nR *int, t *tables, nT int, c *customers, 
 	}
 
 	if !tFound {
-		fmt.Printf("\nError: Table number %d does not exist!\n", targetTable)
-		return
+		fmt.Printf("Table Number %d not found. Creating new Table...\n", targetTable)
+
+		//masukin ke array table
+		t[*nT].num = targetTable
+		fmt.Print("Please enter new table capacity: ")
+		fmt.Scan(&t[*nT].cap)
+		t[*nT].status = true
+		t[*nT].rCount = 0
+		*nT++ //Naikin jumlah total meja
+
+		fmt.Println("New table created successfully!")
 	}
 	//cek apakah jadwal bentrok
 	conflict = false
@@ -229,7 +238,7 @@ func makeReservation(r *reservations, nR *int, t *tables, nT int, c *customers, 
 
 		//ubah status ketersediaan Table menjadi false (menunjukkan dah di reservasi)
 		i = 0
-		for i < nT {
+		for i < *nT {
 			if t[i].num == targetTable {
 				t[i].status = false
 				t[i].rCount++
@@ -244,26 +253,28 @@ func makeReservation(r *reservations, nR *int, t *tables, nT int, c *customers, 
 func sequentialSearch(t tables, nT int, target int) {
 	var found bool
 	found = false
-	for i = 0; i < nT; i++ {
+	for i = 0; i < nT; i++ { // cek dari awal sampe akhir ada ga
 		if target == t[i].num {
 			fmt.Printf("\nTable found on index no %d!\nNumber: %d\nCapacity: %d\nStatus: %t\n", i, t[i].num, t[i].cap, t[i].status)
-			found = true
+			found = true // klo ada jadi true found nya
 		}
 	}
-	if !found {
+	if !found { // klo setelah di cek tapi found nya masih false, berarti gaada mejanya
 		fmt.Printf("\nTable doesn't exist!\n")
 	}
 }
-// 
+
+//
 // 9
-func binarySearch(t tables, nT int, target int) {
-	var left, mid, right int
+func binarySearch(t tables, nT int, target int) { //target it index
+	var left, mid, right int //ketiga ini INDEX
 	var found bool
 	found = false
 	left = 0
 	right = nT - 1
 	mid = (left + right) / 2
 	for left <= right {
+		//cek dulu DIMANA posisi tagret terhadap mid
 		if t[mid].cap > target {
 			right = mid - 1
 		} else if t[mid].cap < target {
@@ -271,7 +282,7 @@ func binarySearch(t tables, nT int, target int) {
 		} else {
 			fmt.Printf("\nTable found on index no %d!\nNumber: %d\nCapacity: %d\nStatus: %t\n", mid, t[mid].num, t[mid].cap, t[mid].status)
 			found = true
-			left = right + 1
+			left = right + 1 // biar bisa keluar dari while (left jadi lebih satu dari right itu salah/gaboleh)
 		}
 		mid = (left + right) / 2
 	}
@@ -282,15 +293,16 @@ func binarySearch(t tables, nT int, target int) {
 
 // 10
 func selectionSortAscend(t *tables, nT int) {
-	var j, min int
-	var temp table
-	for i = 1; i < nT; i++ {
+	var j, min int           // kenapa "min" karena di ascending yang kita pegang itu HASRUSNYA yang terkecil
+	var temp table           // tipe data temp SELALU tipe struct nya, karena yang di simpen SEMUA isi dari suatu index
+	for i = 1; i < nT; i++ { // i untuk looping min/variabel yang dipegang
 		min = i - 1
-		for j = i; j < nT; j++ {
+		for j = i; j < nT; j++ { // j untuk looping variabel2 yang dibandingkan dengan min
 			if t[min].cap > t[j].cap {
 				min = j
 			}
 		}
+		// tukar semuanya (template)
 		temp = t[min]
 		t[min] = t[i-1]
 		t[i-1] = temp
@@ -300,11 +312,11 @@ func selectionSortAscend(t *tables, nT int) {
 // 11
 func insertionSortAscend(t *tables, nT int) {
 	var j int
-	var temp table
-	for i = 1; i < nT; i++ {
+	var temp table           // ini juga sama, simpen semua yg ada di indexnya
+	for i = 1; i < nT; i++ { // sama, i untuk looping yang dipegang (temp disinimah)
 		temp = t[i]
 		j = i - 1
-		for j >= 0 && temp.cap < t[j].cap {
+		for j >= 0 && temp.cap < t[j].cap { //j itu looping pembandingnya (kebelakang, maksudnya j = temp - 1 sampai 0)
 			t[j+1] = t[j]
 			j = j - 1
 		}
@@ -435,7 +447,7 @@ func main() {
 					fmt.Scan(&target)
 					deleteCustomer(&C, &nC, target)
 				} else if cmd == 7 {
-					makeReservation(&R, &nR, &T, nT, &C, &nC)
+					makeReservation(&R, &nR, &T, &nT, &C, &nC)
 				} else if cmd == 8 {
 					fmt.Print("Please Select Table Number: ")
 					fmt.Scan(&target)
